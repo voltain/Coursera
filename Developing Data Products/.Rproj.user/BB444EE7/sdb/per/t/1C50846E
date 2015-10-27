@@ -1,0 +1,16 @@
+{
+    "contents" : "library(RecordLinkage)\n\nshinyServer(function(input, output) {\n  \n  \n\n    \n  \n  output$text <- renderText({\n    x<-(levenshteinSim(input$first, input$second))*100\n    if(input$submit > 0) {\n      paste(\"The word\",input$first,\"and\",input$second,\"are similar from\", x,\"%\")\n    }\n  })\n  \n\n})\n\n",
+    "created" : 1445796196143.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "167131941",
+    "id" : "1C50846E",
+    "lastKnownWriteTime" : 1445805079,
+    "path" : "~/Documents/R/dataProduct/server.R",
+    "project_path" : "server.R",
+    "properties" : {
+    },
+    "source_on_save" : false,
+    "type" : "r_source"
+}

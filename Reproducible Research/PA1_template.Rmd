@@ -1,0 +1,81 @@
+---
+title: "Reproducible Research: Peer Assessment 1"
+output: 
+  html_document:
+    keep_md: true
+---
+
+
+## Loading and preprocessing the data
+```{r}
+unzip("activity.zip") 
+dataNA<-read.csv("activity.csv")
+data<-na.omit(dataNA)
+
+
+dataByDate<-aggregate(steps ~ date, data, sum)
+
+hist(dataByDate$steps)
+```
+
+## What is mean total number of steps taken per day?
+
+```{r}
+summary(dataByDate)
+```
+
+## What is the average daily activity pattern?
+
+```{r}
+dataByInterval<-aggregate(steps ~ interval, data, mean)
+plot(dataByInterval$interval, dataByInterval$steps, type="l")
+
+dataByInterval$interval[dataByInterval$steps==max(dataByInterval$steps)]
+```
+
+## Imputing missing values
+
+```{r}
+sum(is.na(dataNA))
+newDataNA<-dataNA
+
+x<-0
+
+
+for (i in 1:nrow(dataNA)){
+  if (is.na(dataNA$steps[i])){
+    newDataNA$steps[i]<-round(dataByInterval$steps[dataByInterval$interval==dataNA$interval[i]],0)
+  }
+}
+
+dataByDate<-aggregate(steps ~ date, newDataNA, sum)
+
+hist(dataByDate$steps)
+summary(dataByDate)
+```
+
+## Are there differences in activity patterns between weekdays and weekends?
+
+```{r}
+data<-newDataNA
+
+library(lubridate)
+data$weekday <- wday(as.Date(data$date))-1
+data$weektype[data$weekday<6]<-"weekday"
+data$weektype[data$weekday>5]<-"weekend"
+
+dataByWeektype <- aggregate(steps ~ interval + weektype, data, mean)
+
+library(ggplot2)
+qplot(interval, 
+      steps, 
+      data = dataByWeektype, 
+      geom=c("line"),
+      xlab = "interval", 
+      ylab = "# steps", 
+      main = "") +
+  facet_wrap(~ weektype, ncol = 1)
+```
+
+library(knitr)
+knit2html("PA1_template.Rmd")

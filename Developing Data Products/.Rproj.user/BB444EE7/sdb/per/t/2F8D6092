@@ -1,0 +1,16 @@
+{
+    "contents" : "shinyUI(fluidPage(\n  titlePanel(\"Word Similarity with Levenshtein Distance\"),\n  fluidRow(\n    column(12, wellPanel(\n      # Copy the line below to make a text input box\n      textInput(\"first\", label = \"Enter the first word: \", value = \"wholemeal bread\"),\n      textInput(\"second\", label = \"Enter the second word: \", value = \"wholewheat bread\"),\n      actionButton(\"submit\", \"Compare\")\n    )),\n    column(12,\n           verbatimTextOutput(\"text\")\n    )    ,\n    column(12,\n           h2('Documentation'),\n           p('In information theory and computer science, the Levenshtein distance is a metric for measuring the amount of difference between two sequences (i.e. an edit distance). The Levenshtein distance between two strings is defined as the minimum number of edits needed to transform one string into the other, with the allowable edit operations being insertion, deletion, or substitution of a single character.'),\n           p('The script takes the first word and compares with another, based on their distance it calculates the percentage.'),\n           p(' '),\n           p('If you are interested in Levenshtein Disctance same as me, please look at my previous project about similarity of Slavic Languages:',a(href='http://www.michaelbrabec.com/slavic-words-similarity/','http://www.michaelbrabec.com/slavic-words-similarity/'))\n           )\n  )\n))\n\n\n",
+    "created" : 1445796196010.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "1158309242",
+    "id" : "2F8D6092",
+    "lastKnownWriteTime" : 1445805580,
+    "path" : "~/Documents/R/dataProduct/ui.R",
+    "project_path" : "ui.R",
+    "properties" : {
+    },
+    "source_on_save" : false,
+    "type" : "r_source"
+}

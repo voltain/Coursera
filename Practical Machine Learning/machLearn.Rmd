@@ -1,0 +1,200 @@
+---
+title: "Practical Machine Learning - Explained Step by Step"
+author: "Michael Brabec"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+## Introduction
+
+This project focuses on analysing data from the fitness activity tracking device. This data set is output from accelerators on the belt, forearm, arm, and dumbbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. The movement is classified with measurable called "classe".
+
+## Data 
+
+The training data for this project are available here: https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv
+
+The test (correctly data for the final prediction) data are available here: https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv
+
+Please do not confuse the test data set with the test data during the cross-validation phase.
+
+## The Goal
+
+The goal of this project is to predict the manner in which the tested subjects did the exercise. This is the "classe" variable in the training set. 
+In essence, we have training set which helps us to prepare the model and test set to test (correctly data for prediction) the model on. It is important to strive for the highest accuracy as possible.
+
+
+## The process in nutshell
+
+- Load Data
+- Reduce Unnecessary Dimensions
+- Preprocess Data
+- Split to Training Set & Testing Set 
+- Generating Model
+- Testing Model (Cross-Validation Phase)
+- Prediction
+
+## The process in detail
+
+### Load data
+- Loads the for the training
+- Loads the data for the test (= data for the final prediction) 
+
+### Reduce Unnecessary Dimensions
+The original data set uses many dimensions which won't be useful for the model.
+The inferior dimensions could be divided to
+- Unknown (N/A or NULL)
+- Zero Variables
+
+Dimension with many (eg. more than 70%) Unknown entries are not useful for the model. If the dimension would have many, but still minority of the unknown records, these records would be imputed.
+Zero Variables are dimensions with insignificant records closer to the zero.
+
+### Preprocess Data
+Pre-processing transformation (centering, scaling etc) can be estimated from the training data and applied to any data set with the same variables.
+More on http://www.inside-r.org/node/86978
+
+### Split to Training Set & Testing Set
+Let me explain what data sets we have to prevent confusion with terminology.
+
+We have at this moment
+
+- Clean Training Data - the one which was downloaded, cleaned and preprocessed
+- Test Data (correctly data for the final prediction) - the one which was downloaded and will be used for final prediction. We don't need this data to be used yet.
+
+Now we will take the Clean Training Data Set and split it to two parts.
+
+- Training Set (60%)
+- Testing Set (40%)
+
+Once again these two parts are not replacing the original Clean Training Data or Test Data. It is another data set generated during the process.
+
+The Training Set will be used for model creation. The model will be validated with the Testing Set.
+In essence we want to create model which will predict its training set with high accuracy. This should be also the case for the validation. The model will most likely be less accurate for the testing data than the training data.
+
+How do we know if the model is accurate?
+
+- We generate model based on Training Set
+- Run prediction with this model
+- Compare prediction with the Training Set
+- Accuracy is the number of correct guesses between predicted and training data
+
+Example: In training data we know the user Juan did at certain time, certain movement. We predict based on many variables the movement is classified as "E", meaning eg. stepping ahead with hands upwards. Imagine it was wrong prediction, according to the original data set in the same situation Juan actually sat on the floor and classifies as "D". This would mean our prediction was wrong and the model accuracy is decreasing. If this would be only one mistake in 15000 observations, the accuracy would be almost 100%.
+
+### Generating Model
+The caret package with Random Forests is used for generating the model.
+It takes time to produce the model. (15 minutes for this particular task; measured on Mac Pro 2014)
+
+The goal of this step is to create such a model matching the training data set.
+There are plenty of machine learning algorithms, random forests are common.
+
+Thanks to the model we can predict unknown outcome based on "behavior"" of known dimensions (variables).
+This is in the essence what is practical machine learning about. 
+
+### Testing Model (Cross-Validation Phase)
+Model is tested by predicting the outcome (in our case "classe") for the Testing Data (the one which was product of splitting the Cleaned Training Set)
+
+The prediction is compared to expected outcome, because the testing set has the actual outcome.
+
+Why do we measure accuracy on training set and then on testing set?
+
+- We want to make sure it is working well for another data set. What if the high accuracy on training set would be just good luck?
+
+It is important to state the accuracy of the model.
+
+### Prediction
+
+This is the reason why this exercise was done.
+The model is used to predict the variable (in this case "classe") for the Test Data. 
+Test Data means the data we downloaded in the first step.
+
+We can't calculate the accuracy of our model since we don't know the real "classe" measures for the Test Data.
+we can state what is the model based on and with what accuracy on the Test Data.
+
+# The code
+
+## Load Data
+```{r}
+
+library(caret)
+trainingOriginal <- read.csv(file="data/pml-training.csv", header=TRUE, as.is = TRUE, stringsAsFactors = FALSE, sep=',', na.strings=c('NA','','#DIV/0!'))
+testingOriginal <- read.csv(file="data/pml-testing.csv", header=TRUE, as.is = TRUE, stringsAsFactors = FALSE, sep=',', na.strings=c('NA','','#DIV/0!'))
+trainingOriginal$classe <- as.factor(trainingOriginal$classe)  
+
+```
+
+## Reduce Unnecessary Dimensions
+```{r}
+
+NAindex <- apply(trainingOriginal,2,function(x) {sum(is.na(x))}) 
+trainingOriginal <- trainingOriginal[,which(NAindex == 0)]
+
+NAindex <- apply(testingOriginal,2,function(x) {sum(is.na(x))}) 
+testingCleanOriginal <- testingOriginal[,which(NAindex == 0)]
+
+```
+
+## Preprocess Data
+```{r}
+
+v <- which(lapply(trainingOriginal, class) %in% "numeric")
+preObj <-preProcess(trainingOriginal[,v],method=c('knnImpute', 'center', 'scale'))
+preProcessedTraining <- predict(preObj, trainingOriginal[,v])
+preProcessedTraining$classe <- trainingOriginal$classe
+
+preProcessedTesting <-predict(preObj,testingCleanOriginal[,v])
+
+```
+
+## Split to Training Set & Testing Set 
+```{r}
+
+set.seed(42)
+
+inTrain = createDataPartition(preProcessedTraining$classe, p = 0.6, list=FALSE)
+training = preProcessedTraining[inTrain,]
+testing = preProcessedTraining[-inTrain,]
+
+```
+
+## Generating Model
+
+File exists was added purely for speeding up the troubleshooting during report generating.
+```{r}
+
+if (!file.exists("rfmodel.RDS")){
+    model <- train(classe ~., method="rf", data=training, trControl=trainControl(method='cv'), number=7, allowParallel=TRUE )
+    saveRDS(model , "rfmodel.RDS")
+} else {
+  model<-readRDS("rfmodel.RDS")
+  }
+
+
+```
+
+## Testing Model (Cross-Validation Phase)
+```{r}
+
+trainingPred <- predict(model, training)
+confusionMatrix(trainingPred, training$classe)
+
+testingPred <- predict(model, testing)
+confusionMatrix(testingPred, testing$classe)
+
+```
+
+## Prediction
+
+```{r}
+
+testingPred <- predict(model, preProcessedTesting)
+testingPred
+
+result <- cbind(testingOriginal, testingPred)
+```
+
+# Conclusion
+
+The accuracy for our model on tested data was 99.15% enabling accurate result for the "classe" prediction of 20 observations.
